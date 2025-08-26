@@ -1,0 +1,37 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Empire Theme */
+body {
+  @apply bg-stone-900 text-stone-100 min-h-screen;
+  background-image: 
+    radial-gradient(circle at 20% 80%, rgba(212, 175, 55, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 80% 20%, rgba(205, 127, 50, 0.1) 0%, transparent 50%);
+}
+
+/* Custom Components */
+@layer components {
+  .btn-primary {
+    @apply bg-empire-gold hover:bg-empire-bronze text-stone-900 font-bold py-3 px-6 rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl;
+  }
+  
+  .btn-secondary {
+    @apply bg-stone-700 hover:bg-stone-600 text-stone-100 font-semibold py-3 px-6 rounded-lg transition-all duration-200 border border-stone-600;
+  }
+  
+  .input-field {
+    @apply bg-stone-800 border border-stone-600 text-stone-100 rounded-lg px-4 py-3 focus:ring-2 focus:ring-empire-gold focus:border-transparent transition-all duration-200;
+  }
+  
+  .card {
+    @apply bg-stone-800 border border-stone-700 rounded-xl p-6 shadow-lg;
+  }
+  
+  .resource-gold { @apply text-resource-gold; }
+  .resource-food { @apply text-resource-food; }
+  .resource-stone { @apply text-resource-stone; }
+  .resource-iron { @apply text-resource-iron; }
+  .resource-population { @apply text-resource-population; }
+  .resource-influence { @apply text-resource-influence; }
+}
