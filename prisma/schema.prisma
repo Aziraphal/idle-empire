@@ -1,0 +1,148 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum ResourceType {
+  GOLD
+  FOOD
+  STONE
+  IRON
+  POP
+  INFLUENCE
+}
+
+enum GovernorPersonality {
+  CONSERVATIVE
+  AGGRESSIVE
+  MERCHANT
+  EXPLORER
+}
+
+model User {
+  id            String   @id @default(cuid())
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  email         String   @unique
+  username      String   @unique
+  passwordHash  String
+  city          City?
+  sessions      Session[]
+  
+  @@index([email])
+  @@index([username])
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  jwtId     String   @unique
+  createdAt DateTime @default(now())
+  expiresAt DateTime
+  ip        String?
+  userAgent String?
+}
+
+model City {
+  id            String     @id @default(cuid())
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+  name          String
+  userId        String     @unique
+  user          User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  provinces     Province[]
+  researches    ResearchTask[]
+}
+
+model Province {
+  id              String           @id @default(cuid())
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  cityId          String
+  city            City             @relation(fields: [cityId], references: [id], onDelete: Cascade)
+  name            String
+  level           Int              @default(1)
+  threat          Int              @default(0) // barbare/risques
+  lastProduction  DateTime         @default(now()) // timestamp pour idle delta
+  stocks          ResourceStock[]
+  buildings       BuildingInstance[]
+  constructions   ConstructionTask[]
+  ticks           IdleTick[]
+  governor        Governor?
+  
+  @@index([cityId])
+}
+
+model Governor {
+  id            String               @id @default(cuid())
+  createdAt     DateTime             @default(now())
+  updatedAt     DateTime             @updatedAt
+  provinceId    String               @unique
+  province      Province             @relation(fields: [provinceId], references: [id], onDelete: Cascade)
+  name          String
+  personality   GovernorPersonality
+  loyalty       Int                  @default(50) // 0-100
+  xp            Int                  @default(0)
+}
+
+model ResourceStock {
+  id          String        @id @default(cuid())
+  provinceId  String
+  province    Province      @relation(fields: [provinceId], references: [id], onDelete: Cascade)
+  type        ResourceType
+  amount      Int           @default(0)
+  
+  @@unique([provinceId, type])
+  @@index([provinceId])
+}
+
+model BuildingInstance {
+  id          String   @id @default(cuid())
+  provinceId  String
+  province    Province  @relation(fields: [provinceId], references: [id], onDelete: Cascade)
+  type        String    // ex: FARM, MINE, QUARRY, BARRACKS
+  level       Int       @default(1)
+  
+  @@index([provinceId])
+}
+
+model ConstructionTask {
+  id           String   @id @default(cuid())
+  provinceId   String
+  province     Province  @relation(fields: [provinceId], references: [id], onDelete: Cascade)
+  buildingType String
+  targetLevel  Int
+  startedAt    DateTime  @default(now())
+  finishesAt   DateTime
+  status       String    @default("PENDING") // PENDING|DONE|CANCELLED
+}
+
+model ResearchTask {
+  id          String   @id @default(cuid())
+  cityId      String
+  city        City     @relation(fields: [cityId], references: [id], onDelete: Cascade)
+  techKey     String   // ex: ECON_1, MIL_1
+  startedAt   DateTime @default(now())
+  finishesAt  DateTime
+  status      String   @default("PENDING")
+}
+
+model IdleTick {
+  id          String   @id @default(cuid())
+  provinceId  String
+  province    Province  @relation(fields: [provinceId], references: [id], onDelete: Cascade)
+  ranAt       DateTime  @default(now())
+  deltaSecs   Int
+  goldGained  Int       @default(0)
+  foodGained  Int       @default(0)
+  stoneGained Int       @default(0)
+  ironGained  Int       @default(0)
+}
