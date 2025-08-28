@@ -35,6 +35,21 @@ model User {
   passwordHash  String
   city          City?
   sessions      Session[]
+  playerSeasons PlayerSeason[]
+  seasonRankings SeasonRanking[]
+  
+  // Alliance relations
+  allianceMembership AllianceMember?
+  ownedAlliances     Alliance[]
+  sentInvitations    AllianceInvitation[] @relation("InvitationSender")
+  receivedInvitations AllianceInvitation[] @relation("InvitationReceiver")
+  diplomacyActions   DiplomacyAction[]
+  
+  // Permanent progression
+  playerTitles    PlayerTitle[]
+  playerBonuses   PlayerBonus[]
+  achievements    PlayerAchievement[]
+  playerCosmetics PlayerCosmetic[]
   
   @@index([email])
   @@index([username])
@@ -60,6 +75,7 @@ model City {
   user          User       @relation(fields: [userId], references: [id], onDelete: Cascade)
   provinces     Province[]
   researches    ResearchTask[]
+  researchedTechnologies ResearchedTechnology[]
 }
 
 model Province {
@@ -77,6 +93,9 @@ model Province {
   constructions   ConstructionTask[]
   ticks           IdleTick[]
   governor        Governor?
+  events          GameEventInstance[]
+  temporaryEffects TemporaryEffect[]
+  raids           RaidEvent[]
   
   @@index([cityId])
 }
@@ -135,6 +154,126 @@ model ResearchTask {
   status      String   @default("PENDING")
 }
 
+model ResearchedTechnology {
+  id            String   @id @default(cuid())
+  cityId        String
+  city          City     @relation(fields: [cityId], references: [id], onDelete: Cascade)
+  techKey       String   // Technology identifier (AGRICULTURE_1, MINING_1, etc.)
+  seasonId      String   // Which season this was researched in
+  season        Season   @relation(fields: [seasonId], references: [id], onDelete: Cascade)
+  researchedAt  DateTime @default(now())
+  
+  @@unique([cityId, techKey, seasonId])
+  @@index([cityId])
+  @@index([seasonId])
+}
+
+enum SeasonStatus {
+  UPCOMING
+  ACTIVE
+  ENDED
+  ARCHIVED
+}
+
+model Season {
+  id              String        @id @default(cuid())
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  
+  // Season Identity
+  number          Int           @unique // Season 1, 2, 3...
+  name            String        // "L'Éveil", "Les Conquérants"...
+  theme           String        // "BASE", "WARFARE", "MAGIC", "NAVAL"
+  description     String
+  
+  // Timing
+  status          SeasonStatus  @default(UPCOMING)
+  startDate       DateTime
+  endDate         DateTime
+  
+  // Season Content
+  availableTechs  String[]      // Array of tech keys available this season
+  newFeatures     Json?         // New mechanics, events, etc.
+  rewards         Json?         // End-of-season rewards structure
+  
+  // Relations
+  playerSeasons   PlayerSeason[]
+  researchedTechs ResearchedTechnology[]
+  seasonRankings  SeasonRanking[]
+  
+  @@index([status])
+  @@index([startDate, endDate])
+}
+
+model PlayerSeason {
+  id          String   @id @default(cuid())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Relations
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  seasonId    String
+  season      Season   @relation(fields: [seasonId], references: [id], onDelete: Cascade)
+  
+  // Season Progress
+  startedAt   DateTime @default(now())
+  isActive    Boolean  @default(true)
+  
+  // Season Stats (for rankings)
+  totalPower        BigInt   @default(0)      // Overall empire strength
+  resourcesEarned   Json     @default("{}")   // Total resources gained this season
+  technologiesCount Int      @default(0)      // Technologies researched
+  combatVictories   Int      @default(0)      // Battles won
+  buildingsBuilt    Int      @default(0)      // Total construction
+  
+  // Growth metrics (for growth rankings)
+  powerGrowth7d     BigInt   @default(0)      // Power gained last 7 days
+  powerGrowth30d    BigInt   @default(0)      // Power gained last 30 days
+  
+  // Season end results
+  finalRank         Int?     // Final ranking in season
+  seasonRewards     Json?    // Rewards earned
+  
+  @@unique([userId, seasonId])
+  @@index([userId])
+  @@index([seasonId])
+  @@index([totalPower])
+  @@index([powerGrowth7d])
+}
+
+enum RankingType {
+  TOTAL_POWER
+  GROWTH_7D
+  GROWTH_30D
+  TECHNOLOGIES
+  COMBAT
+  WEALTH
+  BUILDINGS
+}
+
+model SeasonRanking {
+  id          String      @id @default(cuid())
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  
+  seasonId    String
+  season      Season      @relation(fields: [seasonId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  rankingType RankingType
+  rank        Int
+  score       BigInt      // The actual value being ranked
+  
+  // Snapshot data for historical purposes
+  snapshotAt  DateTime    @default(now())
+  
+  @@unique([seasonId, userId, rankingType])
+  @@index([seasonId, rankingType, rank])
+  @@index([userId])
+}
+
 model IdleTick {
   id          String   @id @default(cuid())
   provinceId  String
@@ -145,4 +284,597 @@ model IdleTick {
   foodGained  Int       @default(0)
   stoneGained Int       @default(0)
   ironGained  Int       @default(0)
+}
+
+enum EventType {
+  DISCOVERY
+  DISASTER  
+  TRADE
+  BARBARIAN
+  POLITICAL
+  ARTIFACT
+}
+
+enum EventRarity {
+  COMMON
+  UNCOMMON
+  RARE
+  LEGENDARY
+}
+
+model GameEventInstance {
+  id          String     @id @default(cuid())
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  provinceId  String
+  province    Province   @relation(fields: [provinceId], references: [id], onDelete: Cascade)
+  
+  eventKey    String     // Reference to event in GAME_EVENTS
+  type        EventType
+  rarity      EventRarity
+  title       String
+  description String
+  imageIcon   String
+  
+  triggeredAt DateTime   @default(now())
+  expiresAt   DateTime?  // For events that need player action
+  resolved    Boolean    @default(false)
+  resolvedAt  DateTime?  // When event was resolved
+  choiceId    String?    // Player's chosen response
+  
+  // Event outcomes applied
+  resourcesGained Json?   // Record<string, number>
+  governorLoyaltyChange Int @default(0)
+  governorXpGained      Int @default(0)
+  followupScheduled     Boolean @default(false)
+  
+  @@index([provinceId])
+  @@index([resolved])
+}
+
+model TemporaryEffect {
+  id          String   @id @default(cuid())
+  createdAt   DateTime @default(now())
+  provinceId  String
+  province    Province @relation(fields: [provinceId], references: [id], onDelete: Cascade)
+  
+  eventId     String?   // Optional link to triggering event
+  type        String    // RESOURCE_MULTIPLIER, PRODUCTION_BONUS, etc
+  effect      Json      // Record<string, number> - the actual effect data
+  expiresAt   DateTime
+  
+  @@index([provinceId])
+  @@index([expiresAt])
+}
+
+enum EnemyType {
+  BARBARIAN_SCOUTS
+  BARBARIAN_WARRIORS
+  BARBARIAN_HORDE
+  BEAST_PACK
+  RIVAL_SPIES
+  BANDIT_GANG
+  CULTIST_SECT
+}
+
+enum CombatOutcome {
+  VICTORY
+  DEFEAT
+  DRAW
+}
+
+model RaidEvent {
+  id          String   @id @default(cuid())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  provinceId  String
+  province    Province @relation(fields: [provinceId], references: [id], onDelete: Cascade)
+  
+  // Enemy information
+  enemyType        EnemyType
+  enemyName        String
+  enemyStrength    Int
+  enemyThreatLevel Int
+  
+  // Timing
+  detectedAt       DateTime @default(now())
+  arrivalTime      DateTime
+  preparationTime  Int      // Minutes to prepare
+  
+  // Player response
+  strategy         String?  // DEFEND, EVACUATE, etc.
+  reinforcementsRequested Boolean @default(false)
+  resourcesCommitted Json?   // Record<string, number>
+  
+  // Resolution
+  resolved         Boolean  @default(false)
+  resolvedAt       DateTime?
+  combatOutcome    CombatOutcome?
+  victoryCertainty Float?   // 0-1
+  
+  // Battle results
+  defenderCasualties     Int @default(0)
+  enemyCasualties       Int @default(0)
+  infrastructureDamage  Int @default(0)
+  resourcesGained       Json? // Record<string, number>
+  resourcesLost         Json? // Record<string, number>
+  
+  // Experience gains
+  governorXpGained      Int @default(0)
+  governorLoyaltyChange Int @default(0)
+  populationMoraleChange Int @default(0)
+  
+  // Narrative
+  battleReport     String?
+  
+  @@index([provinceId])
+  @@index([resolved])
+  @@index([arrivalTime])
+}
+
+// Alliance System Models
+
+enum AllianceRole {
+  LEADER      // Can do everything
+  OFFICER     // Can invite, kick members, manage diplomacy
+  MEMBER      // Basic member
+}
+
+enum AllianceInvitationStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+  EXPIRED
+}
+
+enum DiplomacyStatus {
+  NEUTRAL     // Default state
+  ALLIED      // Friendly alliance
+  NAP         // Non-Aggression Pact
+  HOSTILE     // At war
+  TRUCE       // Temporary peace
+}
+
+enum DiplomacyActionType {
+  ALLIANCE_REQUEST
+  NAP_REQUEST
+  WAR_DECLARATION
+  PEACE_PROPOSAL
+  TRUCE_REQUEST
+  TRADE_AGREEMENT
+}
+
+model Alliance {
+  id          String   @id @default(cuid())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Basic Info
+  name        String   @unique
+  tag         String   @unique // Short 3-4 letter tag like [ABC]
+  description String?
+  isPublic    Boolean  @default(true) // Can people find and request to join?
+  
+  // Leadership
+  leaderId    String
+  leader      User     @relation(fields: [leaderId], references: [id], onDelete: Cascade)
+  
+  // Settings
+  maxMembers  Int      @default(50)
+  minLevel    Int      @default(1) // Minimum player level to join
+  
+  // Alliance Stats (calculated periodically)
+  totalPower    BigInt   @default(0)
+  memberCount   Int      @default(1)
+  avgLevel      Float    @default(1.0)
+  totalTerritories Int   @default(0)
+  
+  // Season-specific stats
+  seasonWins    Int      @default(0)
+  seasonLosses  Int      @default(0)
+  
+  // Relations
+  members       AllianceMember[]
+  invitations   AllianceInvitation[]
+  
+  // Diplomacy (as source alliance)
+  diplomaticRelations DiplomaticRelation[] @relation("SourceAlliance")
+  receivedDiplomacy   DiplomaticRelation[] @relation("TargetAlliance")
+  
+  // Alliance activities
+  activities    AllianceActivity[]
+  
+  @@index([name])
+  @@index([tag])
+  @@index([leaderId])
+  @@index([totalPower])
+}
+
+model AllianceMember {
+  id          String   @id @default(cuid())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Relations
+  userId      String   @unique
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  allianceId  String
+  alliance    Alliance @relation(fields: [allianceId], references: [id], onDelete: Cascade)
+  
+  // Member Info
+  role        AllianceRole @default(MEMBER)
+  joinedAt    DateTime     @default(now())
+  
+  // Member Stats (for alliance rankings)
+  powerContribution BigInt @default(0)
+  activityScore     Int    @default(0)
+  
+  // Member status
+  isActive    Boolean  @default(true)
+  lastSeen    DateTime @default(now())
+  
+  @@index([userId])
+  @@index([allianceId])
+  @@index([role])
+}
+
+model AllianceInvitation {
+  id          String   @id @default(cuid())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Relations
+  allianceId  String
+  alliance    Alliance @relation(fields: [allianceId], references: [id], onDelete: Cascade)
+  
+  senderId    String
+  sender      User     @relation("InvitationSender", fields: [senderId], references: [id], onDelete: Cascade)
+  
+  receiverId  String
+  receiver    User     @relation("InvitationReceiver", fields: [receiverId], references: [id], onDelete: Cascade)
+  
+  // Invitation Info
+  status      AllianceInvitationStatus @default(PENDING)
+  message     String?
+  expiresAt   DateTime
+  respondedAt DateTime?
+  
+  @@unique([allianceId, receiverId]) // Can't invite same person twice
+  @@index([receiverId])
+  @@index([status])
+  @@index([expiresAt])
+}
+
+model DiplomaticRelation {
+  id          String   @id @default(cuid())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Relations between alliances
+  sourceAllianceId String
+  sourceAlliance   Alliance @relation("SourceAlliance", fields: [sourceAllianceId], references: [id], onDelete: Cascade)
+  
+  targetAllianceId String
+  targetAlliance   Alliance @relation("TargetAlliance", fields: [targetAllianceId], references: [id], onDelete: Cascade)
+  
+  // Diplomatic Status
+  status      DiplomacyStatus @default(NEUTRAL)
+  
+  // Agreement Details
+  establishedAt DateTime @default(now())
+  expiresAt     DateTime? // For temporary agreements
+  
+  // Terms and conditions
+  terms       Json?     // Specific terms of the agreement
+  
+  // History
+  previousStatus DiplomacyStatus?
+  changedAt     DateTime?
+  changedBy     String?   // User ID who initiated the change
+  
+  @@unique([sourceAllianceId, targetAllianceId])
+  @@index([sourceAllianceId])
+  @@index([targetAllianceId])
+  @@index([status])
+}
+
+model DiplomacyAction {
+  id          String   @id @default(cuid())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Action details
+  actionType  DiplomacyActionType
+  status      String   @default("PENDING") // PENDING, ACCEPTED, REJECTED, EXPIRED
+  
+  // Relations
+  initiatorId String
+  initiator   User     @relation(fields: [initiatorId], references: [id], onDelete: Cascade)
+  
+  sourceAllianceId String
+  targetAllianceId String
+  
+  // Action content
+  message     String?
+  terms       Json?
+  expiresAt   DateTime
+  respondedAt DateTime?
+  
+  @@index([sourceAllianceId])
+  @@index([targetAllianceId])
+  @@index([status])
+  @@index([actionType])
+}
+
+model AllianceActivity {
+  id          String   @id @default(cuid())
+  createdAt   DateTime @default(now())
+  
+  allianceId  String
+  alliance    Alliance @relation(fields: [allianceId], references: [id], onDelete: Cascade)
+  
+  // Activity details
+  activityType String   // MEMBER_JOINED, MEMBER_LEFT, DIPLOMACY_CHANGED, WAR_DECLARED, etc.
+  description  String
+  data         Json?    // Additional data about the activity
+  
+  // Optional user reference
+  userId      String?
+  
+  @@index([allianceId])
+  @@index([createdAt])
+}
+
+// Permanent Rewards & Progression System
+
+enum TitleRarity {
+  COMMON
+  UNCOMMON
+  RARE
+  EPIC
+  LEGENDARY
+}
+
+enum TitleCategory {
+  SEASONAL      // From season rankings
+  ACHIEVEMENT   // From specific achievements  
+  ALLIANCE      // From alliance activities
+  SPECIAL       // Limited time or unique events
+  FOUNDER       // Early player rewards
+}
+
+enum BonusType {
+  PRODUCTION_MULTIPLIER    // +X% all production
+  RESOURCE_BONUS          // +X% specific resource
+  CONSTRUCTION_SPEED      // +X% build speed
+  RESEARCH_SPEED         // +X% research speed
+  XP_BONUS              // +X% experience gain
+  STARTING_RESOURCES    // Extra resources at season start
+}
+
+enum AchievementCategory {
+  PROGRESS        // Total power, buildings, etc.
+  SEASONAL        // Season-specific goals
+  SOCIAL          // Alliance and interactions
+  COMBAT          // Battles and victories
+  EXPLORATION     // Discovery and research
+  ECONOMIC        // Resource and trade goals
+}
+
+model Title {
+  id          String        @id @default(cuid())
+  createdAt   DateTime      @default(now())
+  
+  // Title Identity
+  key         String        @unique // FOUNDER_LEGENDARY, SEASON_1_CHAMPION, etc.
+  name        String        // "Fondateur Légendaire"
+  description String        // "Achieved top 10 in Season 1"
+  
+  // Visual Properties
+  rarity      TitleRarity
+  category    TitleCategory
+  color       String        @default("#FFD700") // Hex color code
+  icon        String        @default("🏆") // Emoji or icon
+  
+  // Availability
+  isActive    Boolean       @default(true)
+  limitedTime DateTime?     // Expires after this date
+  maxAwarded  Int?          // Maximum number of players who can earn this
+  
+  // Requirements (stored as JSON for flexibility)
+  requirements Json         // { "seasonRank": 10, "season": 1 }
+  
+  // Relations
+  playerTitles PlayerTitle[]
+  
+  @@index([key])
+  @@index([category])
+  @@index([rarity])
+}
+
+model PlayerTitle {
+  id          String   @id @default(cuid())
+  createdAt   DateTime @default(now())
+  
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  titleId     String
+  title       Title    @relation(fields: [titleId], references: [id], onDelete: Cascade)
+  
+  // Award Context
+  awardedAt   DateTime @default(now())
+  awardedFor  String?  // "Season 1 Rank #3", "Alliance Leader for 6 months"
+  seasonId    String?  // Which season this was earned in
+  
+  // Display Settings
+  isDisplayed Boolean  @default(false) // Is this the player's active title?
+  
+  @@unique([userId, titleId])
+  @@index([userId])
+  @@index([titleId])
+  @@index([isDisplayed])
+}
+
+model Bonus {
+  id          String    @id @default(cuid())
+  createdAt   DateTime  @default(now())
+  
+  // Bonus Identity
+  key         String    @unique
+  name        String
+  description String
+  
+  // Bonus Properties
+  type        BonusType
+  value       Float     // 0.05 = +5%
+  stackable   Boolean   @default(false) // Can multiple instances stack?
+  
+  // Duration
+  permanent   Boolean   @default(true)
+  duration    Int?      // Duration in hours if not permanent
+  
+  // Visual
+  icon        String    @default("⭐")
+  color       String    @default("#4ADE80")
+  
+  // Relations
+  playerBonuses PlayerBonus[]
+  
+  @@index([key])
+  @@index([type])
+}
+
+model PlayerBonus {
+  id          String   @id @default(cuid())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  bonusId     String
+  bonus       Bonus    @relation(fields: [bonusId], references: [id], onDelete: Cascade)
+  
+  // Instance Properties
+  awardedAt   DateTime @default(now())
+  expiresAt   DateTime? // For temporary bonuses
+  isActive    Boolean  @default(true)
+  
+  // Stacking
+  stackCount  Int      @default(1) // How many instances of this bonus
+  
+  // Context
+  awardedFor  String?  // Why was this awarded
+  seasonId    String?  // Season context
+  
+  @@unique([userId, bonusId]) // One instance per user per bonus type
+  @@index([userId])
+  @@index([bonusId])
+  @@index([isActive])
+  @@index([expiresAt])
+}
+
+model Achievement {
+  id          String              @id @default(cuid())
+  createdAt   DateTime            @default(now())
+  
+  // Achievement Identity
+  key         String              @unique
+  name        String
+  description String
+  category    AchievementCategory
+  
+  // Requirements and Rewards
+  requirements Json               // Flexible requirements
+  rewards     Json                // Titles, bonuses, cosmetics to award
+  
+  // Properties
+  isHidden    Boolean             @default(false) // Hidden until unlocked
+  isRepeatable Boolean            @default(false) // Can be earned multiple times
+  
+  // Visual
+  icon        String              @default("🏆")
+  rarity      TitleRarity         @default(COMMON)
+  
+  // Relations
+  playerAchievements PlayerAchievement[]
+  
+  @@index([key])
+  @@index([category])
+  @@index([rarity])
+}
+
+model PlayerAchievement {
+  id          String      @id @default(cuid())
+  createdAt   DateTime    @default(now())
+  
+  userId      String
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  achievementId String
+  achievement Achievement @relation(fields: [achievementId], references: [id], onDelete: Cascade)
+  
+  // Achievement Progress
+  unlockedAt  DateTime    @default(now())
+  progress    Json        @default("{}") // Current progress towards achievement
+  isCompleted Boolean     @default(false)
+  
+  // Context
+  seasonId    String?
+  completedFor String?   // Additional context
+  
+  @@unique([userId, achievementId])
+  @@index([userId])
+  @@index([achievementId])
+  @@index([isCompleted])
+}
+
+model Cosmetic {
+  id          String   @id @default(cuid())
+  createdAt   DateTime @default(now())
+  
+  // Cosmetic Identity
+  key         String   @unique
+  name        String
+  description String
+  
+  // Type and Properties  
+  type        String   // BANNER, COLOR, EMBLEM, FRAME, etc.
+  data        Json     // Visual properties (colors, patterns, etc.)
+  
+  // Rarity and Availability
+  rarity      TitleRarity @default(COMMON)
+  isLimited   Boolean     @default(false)
+  
+  // Relations
+  playerCosmetics PlayerCosmetic[]
+  
+  @@index([key])
+  @@index([type])
+  @@index([rarity])
+}
+
+model PlayerCosmetic {
+  id          String   @id @default(cuid())
+  createdAt   DateTime @default(now())
+  
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  cosmeticId  String
+  cosmetic    Cosmetic @relation(fields: [cosmeticId], references: [id], onDelete: Cascade)
+  
+  // Unlock Context
+  unlockedAt  DateTime @default(now())
+  unlockedFor String?
+  seasonId    String?
+  
+  // Usage
+  isEquipped  Boolean  @default(false)
+  
+  @@unique([userId, cosmeticId])
+  @@index([userId])
+  @@index([cosmeticId])
+  @@index([isEquipped])
 }

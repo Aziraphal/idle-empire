@@ -1,0 +1,13 @@
+{
+  "env": {
+    "DATABASE_URL": "postgresql://postgres:CtMfWVukvyerzUIsRqMDjZHleysMsLBB@shuttle.proxy.rlwy.net:28302/railway",
+    "JWT_SECRET": "prod-jwt-secret-key-very-secure-change-me",
+    "NEXTAUTH_SECRET": "prod-nextauth-secret-change-me",
+    "NODE_ENV": "production"
+  },
+  "build": {
+    "env": {
+      "NODE_ENV": "production"
+    }
+  }
+}
