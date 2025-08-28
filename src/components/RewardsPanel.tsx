@@ -73,7 +73,7 @@ export default function RewardsPanel() {
 
   const tabs = [
     { id: "titles", label: "Titres", count: userRewards?.titles.length || 0 },
-    { id: "achievements", label: "Succès", count: userRewards?.achievements.filter(a => a.completedAt).length || 0 },
+    { id: "achievements", label: "Succès", count: userRewards?.achievements.filter(a => (a as any).completedAt).length || 0 },
     { id: "bonuses", label: "Bonus", count: userRewards?.bonuses.length || 0 },
     { id: "cosmetics", label: "Cosmétiques", count: userRewards?.cosmetics.length || 0 },
     { id: "leaderboard", label: "Classement", count: 0 },
@@ -200,7 +200,7 @@ export default function RewardsPanel() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {allAchievements?.map((achievement) => {
                 const playerAchievement = userRewards?.achievements.find(pa => pa.achievementId === achievement.id);
-                const isCompleted = playerAchievement?.completedAt;
+                const isCompleted = (playerAchievement as any)?.completedAt;
                 const progress = playerAchievement?.currentProgress || 0;
                 const progressPercentage = Math.min((progress / achievement.targetValue) * 100, 100);
 
@@ -230,7 +230,7 @@ export default function RewardsPanel() {
 
                     {isCompleted && (
                       <div className="text-xs text-green-600">
-                        Complété le {new Date(playerAchievement!.completedAt!).toLocaleDateString()}
+                        Complété le {new Date((playerAchievement as any)!.completedAt!).toLocaleDateString()}
                       </div>
                     )}
                   </div>

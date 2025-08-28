@@ -9,7 +9,7 @@ import { combatRouter } from "./routers/combat";
 import { technologiesRouter } from "./routers/technologies";
 import { seasonsRouter } from "./routers/seasons";
 import { alliancesRouter } from "./routers/alliances";
-import { rewardsRouter } from "./routers/rewards";
+// import { rewardsRouter } from "./routers/rewards"; // Temporairement désactivé
 
 export const appRouter = createTRPCRouter({
   auth: authRouter,
@@ -22,7 +22,7 @@ export const appRouter = createTRPCRouter({
   technologies: technologiesRouter,
   seasons: seasonsRouter,
   alliances: alliancesRouter,
-  rewards: rewardsRouter,
+  // rewards: rewardsRouter, // Temporairement désactivé
 });
 
 export type AppRouter = typeof appRouter;
