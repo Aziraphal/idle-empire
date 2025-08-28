@@ -14,10 +14,12 @@ out/
 build/
 dist/
 
-# Environment variables
+# Environment variables - NEVER COMMIT SECRETS
 .env
 .env*.local
 .env*.example
+.env.production
+vercel.json
 
 # Vercel
 .vercel
