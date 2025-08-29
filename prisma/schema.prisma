@@ -201,6 +201,7 @@ model Season {
   playerSeasons   PlayerSeason[]
   researchedTechs ResearchedTechnology[]
   seasonRankings  SeasonRanking[]
+  quests          Quest[]
   
   @@index([status])
   @@index([startDate, endDate])
