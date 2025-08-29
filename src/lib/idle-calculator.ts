@@ -147,6 +147,8 @@ export function calculateIdleProduction(
     IRON: BASE_PRODUCTION.IRON,
     POP: BASE_PRODUCTION.POP,
     INFLUENCE: BASE_PRODUCTION.INFLUENCE,
+    MANA: BASE_PRODUCTION.MANA,
+    ENERGY: BASE_PRODUCTION.ENERGY,
   };
 
   // Calculate technology bonuses first
@@ -201,6 +203,8 @@ export function calculateIdleProduction(
     IRON: Math.floor(hourlyRate.IRON * timeDeltaHours),
     POP: Math.floor(hourlyRate.POP * timeDeltaHours),
     INFLUENCE: Math.floor(hourlyRate.INFLUENCE * timeDeltaHours),
+    MANA: Math.floor(hourlyRate.MANA * timeDeltaHours),
+    ENERGY: Math.floor(hourlyRate.ENERGY * timeDeltaHours),
   };
 
   return {

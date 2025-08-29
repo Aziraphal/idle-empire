@@ -153,6 +153,8 @@ export const empireRouter = createTRPCRouter({
       IRON: 0,
       POP: 0,
       INFLUENCE: 0,
+      MANA: 0,
+      ENERGY: 0,
     };
 
     let totalResources: Record<ResourceType, number> = {
@@ -162,6 +164,8 @@ export const empireRouter = createTRPCRouter({
       IRON: 0,
       POP: 0,
       INFLUENCE: 0,
+      MANA: 0,
+      ENERGY: 0,
     };
 
     // Get researched technologies for this city
@@ -252,6 +256,8 @@ export const empireRouter = createTRPCRouter({
       IRON: 0,
       POP: 0,
       INFLUENCE: 0,
+      MANA: 0,
+      ENERGY: 0,
     };
 
     let totalResources: Record<ResourceType, number> = {
@@ -261,6 +267,8 @@ export const empireRouter = createTRPCRouter({
       IRON: 0,
       POP: 0,
       INFLUENCE: 0,
+      MANA: 0,
+      ENERGY: 0,
     };
 
     // Get researched technologies for this city
