@@ -67,7 +67,8 @@ export default function QuestsPanel({ isOpen, onClose }: QuestsPanelProps) {
   if (!isOpen) return null;
 
   const quests = questsData?.quests || [];
-  const categories = ['ALL', ...new Set(quests.map(q => q.category))];
+  const uniqueCategories = Array.from(new Set(quests.map(q => q.category)));
+  const categories = ['ALL', ...uniqueCategories];
   
   const filteredQuests = selectedCategory === 'ALL' 
     ? quests 
