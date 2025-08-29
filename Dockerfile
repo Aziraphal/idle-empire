@@ -20,6 +20,9 @@ RUN npx prisma generate
 # Build the application
 RUN npm run build
 
+# Run database migrations during build (instead of runtime)
+RUN npx prisma db push --accept-data-loss
+
 # Expose port
 EXPOSE 3000
 
