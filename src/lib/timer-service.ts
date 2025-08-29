@@ -244,15 +244,42 @@ export function getBuildingUpgradeCost(buildingType: string, currentLevel: numbe
   const baseData = BUILDING_DATA[buildingType];
   if (!baseData) throw new Error(`Unknown building type: ${buildingType}`);
 
-  // Cost and time scale exponentially with level
-  // After level 15, scaling becomes much steeper (soft cap)
-  const baseLevelMultiplier = Math.pow(1.5, Math.min(currentLevel, 15));
-  const highLevelMultiplier = currentLevel > 15 ? Math.pow(2.0, currentLevel - 15) : 1;
-  const levelMultiplier = baseLevelMultiplier * highLevelMultiplier;
+  // Cost and time scale by tiers of 5 levels
+  // Levels 1-5: Base scaling
+  // Levels 6-10: Slightly higher scaling
+  // Levels 11-15: Moderate scaling
+  // Levels 16-20: High scaling (soft cap)
+  // Levels 21+: Very high scaling (hard cap)
   
-  const baseTimeMultiplier = Math.pow(1.2, Math.min(currentLevel, 15));
-  const highTimeMultiplier = currentLevel > 15 ? Math.pow(1.8, currentLevel - 15) : 1;
-  const timeMultiplier = baseTimeMultiplier * highTimeMultiplier;
+  // Cost scaling (more aggressive)
+  let costMultiplier = 1;
+  if (currentLevel <= 5) {
+    costMultiplier = Math.pow(1.3, currentLevel);
+  } else if (currentLevel <= 10) {
+    costMultiplier = Math.pow(1.3, 5) * Math.pow(1.4, currentLevel - 5);
+  } else if (currentLevel <= 15) {
+    costMultiplier = Math.pow(1.3, 5) * Math.pow(1.4, 5) * Math.pow(1.6, currentLevel - 10);
+  } else if (currentLevel <= 20) {
+    costMultiplier = Math.pow(1.3, 5) * Math.pow(1.4, 5) * Math.pow(1.6, 5) * Math.pow(2.0, currentLevel - 15);
+  } else {
+    costMultiplier = Math.pow(1.3, 5) * Math.pow(1.4, 5) * Math.pow(1.6, 5) * Math.pow(2.0, 5) * Math.pow(2.5, currentLevel - 20);
+  }
+  
+  // Time scaling (much gentler, especially early game)
+  let timeMultiplier = 1;
+  if (currentLevel <= 5) {
+    timeMultiplier = Math.pow(1.1, currentLevel); // Very gentle start
+  } else if (currentLevel <= 10) {
+    timeMultiplier = Math.pow(1.1, 5) * Math.pow(1.15, currentLevel - 5);
+  } else if (currentLevel <= 15) {
+    timeMultiplier = Math.pow(1.1, 5) * Math.pow(1.15, 5) * Math.pow(1.2, currentLevel - 10);
+  } else if (currentLevel <= 20) {
+    timeMultiplier = Math.pow(1.1, 5) * Math.pow(1.15, 5) * Math.pow(1.2, 5) * Math.pow(1.4, currentLevel - 15);
+  } else {
+    timeMultiplier = Math.pow(1.1, 5) * Math.pow(1.15, 5) * Math.pow(1.2, 5) * Math.pow(1.4, 5) * Math.pow(1.8, currentLevel - 20);
+  }
+  
+  const levelMultiplier = costMultiplier;
 
   const upgradeCost: Record<string, number> = {};
   Object.entries(baseData.cost).forEach(([resource, amount]) => {
