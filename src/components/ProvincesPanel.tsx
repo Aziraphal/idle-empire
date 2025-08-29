@@ -1,6 +1,7 @@
 import { trpc } from "@/lib/trpc";
 import { GovernorPersonality, ResourceType } from "@prisma/client";
 import { useState } from "react";
+import { useClickOutside } from "@/hooks/useClickOutside";
 
 interface ProvincesPanelProps {
   isOpen: boolean;
@@ -35,6 +36,9 @@ const BUILDING_ICONS = {
 export default function ProvincesPanel({ isOpen, onClose }: ProvincesPanelProps) {
   const [selectedProvince, setSelectedProvince] = useState<string>('');
   const [viewMode, setViewMode] = useState<'overview' | 'resources' | 'buildings' | 'governors'>('overview');
+
+  // Handle click outside to close panel
+  const panelRef = useClickOutside<HTMLDivElement>(onClose, isOpen);
 
   const { data: governorsData, refetch } = trpc.governors.getGovernors.useQuery();
   const { data: empireData } = trpc.empire.getProductionSummary.useQuery();
@@ -115,7 +119,7 @@ export default function ProvincesPanel({ isOpen, onClose }: ProvincesPanelProps)
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50">
-      <div className="bg-stone-800 rounded-lg p-6 max-w-7xl w-full max-h-[90vh] overflow-y-auto m-4">
+      <div ref={panelRef} className="bg-stone-800 rounded-lg p-6 max-w-7xl w-full max-h-[90vh] overflow-y-auto m-4">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-2xl font-bold text-empire-gold">🏛️ Empire Provinces</h2>
           <button

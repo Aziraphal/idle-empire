@@ -1,6 +1,7 @@
 import { trpc } from "@/lib/trpc";
 import { useState } from "react";
 import { TECHNOLOGY_DATA } from "@/lib/timer-service";
+import { useClickOutside } from "@/hooks/useClickOutside";
 
 interface TechnologiesPanelProps {
   isOpen: boolean;
@@ -31,6 +32,9 @@ const RESOURCE_ICONS = {
 
 export default function TechnologiesPanel({ isOpen, onClose }: TechnologiesPanelProps) {
   const [activeTab, setActiveTab] = useState<'tree' | 'research'>('tree');
+
+  // Handle click outside to close panel
+  const panelRef = useClickOutside<HTMLDivElement>(onClose, isOpen);
 
   const { data: technologyTree, refetch: refetchTree } = trpc.technologies.getTechnologyTree.useQuery(
     undefined,
@@ -88,7 +92,7 @@ export default function TechnologiesPanel({ isOpen, onClose }: TechnologiesPanel
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-stone-800 rounded-lg max-w-6xl w-full mx-4 max-h-[90vh] overflow-hidden">
+      <div ref={panelRef} className="bg-stone-800 rounded-lg max-w-6xl w-full mx-4 max-h-[90vh] overflow-hidden">
         <div className="p-6 border-b border-stone-600">
           <div className="flex justify-between items-center">
             <h2 className="text-2xl font-bold text-empire-gold flex items-center gap-2">

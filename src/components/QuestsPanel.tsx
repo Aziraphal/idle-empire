@@ -1,5 +1,6 @@
 import { trpc } from "@/lib/trpc";
 import { useState } from "react";
+import { useClickOutside } from "@/hooks/useClickOutside";
 
 interface QuestsPanelProps {
   isOpen: boolean;
@@ -42,6 +43,9 @@ const STATUS_LABELS: Record<string, string> = {
 
 export default function QuestsPanel({ isOpen, onClose }: QuestsPanelProps) {
   const [selectedCategory, setSelectedCategory] = useState<string>('ALL');
+  
+  // Handle click outside to close panel
+  const panelRef = useClickOutside<HTMLDivElement>(onClose, isOpen);
   
   const { data: questsData, refetch: refetchQuests } = trpc.quests.getPlayerQuests.useQuery();
   
@@ -134,7 +138,7 @@ export default function QuestsPanel({ isOpen, onClose }: QuestsPanelProps) {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50">
-      <div className="bg-stone-800 rounded-lg p-6 max-w-6xl w-full max-h-[90vh] overflow-y-auto m-4">
+      <div ref={panelRef} className="bg-stone-800 rounded-lg p-6 max-w-6xl w-full max-h-[90vh] overflow-y-auto m-4">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-2xl font-bold text-empire-gold">📋 Quest Journal</h2>
           <button
