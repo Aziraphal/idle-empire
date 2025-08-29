@@ -44,6 +44,16 @@ export default function GovernorsPanel({ isOpen, onClose }: GovernorsPanelProps)
     },
   });
 
+  const initializeGovernorsMutation = trpc.governors.initializeGovernors.useMutation({
+    onSuccess: (data) => {
+      alert(`✅ ${data.message}!\n\nGovernors created:\n${data.governors.map(g => `- ${g.governor} in ${g.province}`).join('\n')}`);
+      refetchGovernors();
+    },
+    onError: (error) => {
+      alert(`❌ Failed to initialize governors: ${error.message}`);
+    },
+  });
+
   const triggerSingleMutation = trpc.governors.triggerGovernorDecision.useMutation({
     onSuccess: (data) => {
       setLastDecisions([{
@@ -154,8 +164,12 @@ export default function GovernorsPanel({ isOpen, onClose }: GovernorsPanelProps)
                   <div className="text-center py-8">
                     <h4 className="text-lg font-semibold mb-2">{province.name}</h4>
                     <p className="text-stone-400 mb-4">No governor assigned</p>
-                    <button className="btn-secondary">
-                      🔍 Find Governor
+                    <button 
+                      onClick={() => initializeGovernorsMutation.mutate()}
+                      disabled={initializeGovernorsMutation.isLoading}
+                      className="btn-secondary"
+                    >
+                      {initializeGovernorsMutation.isLoading ? "..." : "🔍 Find Governor"}
                     </button>
                   </div>
                 </div>

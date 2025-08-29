@@ -378,4 +378,50 @@ export const governorsRouter = createTRPCRouter({
         governorName: province.governor.name,
       };
     }),
+
+  // Initialize governors for provinces that don't have any
+  initializeGovernors: protectedProcedure.mutation(async ({ ctx }) => {
+    const city = await ctx.prisma.city.findUnique({
+      where: { userId: ctx.userId },
+      include: {
+        provinces: {
+          include: { governor: true },
+        },
+      },
+    });
+
+    if (!city) {
+      throw new TRPCError({ code: "NOT_FOUND", message: "City not found" });
+    }
+
+    const governorNames = ["Marcus", "Julia", "Gaius", "Livia", "Brutus", "Octavia"];
+    const personalities = ["CONSERVATIVE", "AGGRESSIVE", "MERCHANT", "EXPLORER"] as const;
+    
+    const created = [];
+    
+    for (const province of city.provinces) {
+      if (!province.governor) {
+        const randomName = governorNames[Math.floor(Math.random() * governorNames.length)];
+        const randomPersonality = personalities[Math.floor(Math.random() * personalities.length)];
+        
+        const governor = await ctx.prisma.governor.create({
+          data: {
+            name: randomName,
+            personality: randomPersonality,
+            loyalty: 75 + Math.floor(Math.random() * 20), // 75-94
+            xp: Math.floor(Math.random() * 100), // 0-99
+            provinceId: province.id,
+          },
+        });
+        
+        created.push({ province: province.name, governor: governor.name });
+      }
+    }
+
+    return { 
+      success: true, 
+      message: `Initialized ${created.length} governors`,
+      governors: created 
+    };
+  }),
 });
