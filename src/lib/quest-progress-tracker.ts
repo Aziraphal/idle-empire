@@ -217,11 +217,17 @@ export async function processCompletedTasks(prisma: PrismaClient, userId: string
     });
 
     // Add researched technology
+    // Get the current active season
+    const activeSeason = await prisma.season.findFirst({
+      where: { status: "ACTIVE" },
+    });
+
     await prisma.researchedTechnology.create({
       data: {
         cityId: research.cityId,
         techKey: research.techKey,
         researchedAt: new Date(),
+        seasonId: activeSeason?.id || null, // Use active season or null if no season
       },
     });
 
