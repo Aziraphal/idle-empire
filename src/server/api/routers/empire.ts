@@ -32,6 +32,9 @@ export const empireRouter = createTRPCRouter({
       throw new Error("City not found");
     }
 
+    // Process completed construction/research tasks and update quests
+    await processCompletedTasks(ctx.prisma, ctx.userId);
+
     // Process each province for idle production
     const processedProvinces = await Promise.all(
       city.provinces.map(async (province) => {

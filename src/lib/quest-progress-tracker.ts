@@ -12,19 +12,19 @@ export async function updateQuestProgress(
   }
 ) {
   try {
-    // Find all active player quests that could be progressed by this action
-    const relevantQuests = await prisma.playerQuest.findMany({
+    // Find all active player quests
+    const playerQuests = await prisma.playerQuest.findMany({
       where: {
         userId: userId,
         status: { in: ["AVAILABLE", "IN_PROGRESS"] },
-        quest: {
-          objectives: {
-            path: ["type"],
-            equals: action,
-          },
-        },
       },
       include: { quest: true },
+    });
+
+    // Filter quests that match this action type
+    const relevantQuests = playerQuests.filter(pq => {
+      const objectives = pq.quest.objectives as any;
+      return objectives && objectives.type === action;
     });
 
     const updatedQuests = [];
@@ -33,38 +33,37 @@ export async function updateQuestProgress(
       const objectives = playerQuest.quest.objectives as any;
       const currentProgress = playerQuest.progress as any;
 
-      // Check if this action matches the quest objective
-      if (objectives.target === params.target) {
-        let shouldUpdate = false;
+      // Check if this action matches the quest objective conditions
+      const shouldProcess = 
+        !objectives.target || // No target specified = matches any
+        objectives.target === params.target || // Exact match
+        objectives.target === "ANY"; // ANY target matches all
+
+      if (shouldProcess) {
+        let shouldComplete = false;
         let newProgress = { ...currentProgress };
 
         switch (action) {
           case "BUILD_BUILDING":
-            if (objectives.type === "BUILD_BUILDING") {
-              newProgress.currentAmount = (newProgress.currentAmount || 0) + (params.amount || 1);
-              shouldUpdate = newProgress.currentAmount >= objectives.amount;
-            }
+            newProgress.currentAmount = (newProgress.currentAmount || 0) + (params.amount || 1);
+            shouldComplete = newProgress.currentAmount >= (objectives.amount || 1);
             break;
           
           case "REACH_LEVEL":
-            if (objectives.type === "REACH_LEVEL" && params.level) {
+            if (params.level) {
               newProgress.currentLevel = Math.max(newProgress.currentLevel || 0, params.level);
-              shouldUpdate = newProgress.currentLevel >= objectives.level;
+              shouldComplete = newProgress.currentLevel >= (objectives.level || 1);
             }
             break;
 
           case "RESEARCH_TECH":
-            if (objectives.type === "RESEARCH_TECH") {
-              newProgress.currentAmount = (newProgress.currentAmount || 0) + 1;
-              shouldUpdate = newProgress.currentAmount >= (objectives.amount || 1);
-            }
+            newProgress.currentAmount = (newProgress.currentAmount || 0) + 1;
+            shouldComplete = newProgress.currentAmount >= (objectives.amount || 1);
             break;
 
           case "COLLECT_RESOURCE":
-            if (objectives.type === "COLLECT_RESOURCE") {
-              newProgress.currentAmount = (newProgress.currentAmount || 0) + (params.amount || 0);
-              shouldUpdate = newProgress.currentAmount >= objectives.amount;
-            }
+            newProgress.currentAmount = (newProgress.currentAmount || 0) + (params.amount || 0);
+            shouldComplete = newProgress.currentAmount >= (objectives.amount || 1);
             break;
         }
 
@@ -73,8 +72,8 @@ export async function updateQuestProgress(
           where: { id: playerQuest.id },
           data: {
             progress: newProgress,
-            status: shouldUpdate ? "COMPLETED" : "IN_PROGRESS",
-            completedAt: shouldUpdate ? new Date() : null,
+            status: shouldComplete ? "COMPLETED" : "IN_PROGRESS",
+            completedAt: shouldComplete ? new Date() : null,
             lastUpdated: new Date(),
           },
           include: { quest: true },
@@ -83,7 +82,7 @@ export async function updateQuestProgress(
         updatedQuests.push(updatedPlayerQuest);
 
         // If quest is completed, check if any new quests should be unlocked
-        if (shouldUpdate) {
+        if (shouldComplete) {
           await unlockPrerequisiteQuests(prisma, userId, playerQuest.quest.key);
         }
       }

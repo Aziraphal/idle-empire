@@ -7,6 +7,7 @@ import {
   BUILDING_DATA,
   TECHNOLOGY_DATA 
 } from "@/lib/timer-service";
+import { updateQuestProgress } from "@/lib/quest-progress-tracker";
 
 export const constructionRouter = createTRPCRouter({
   // Get all construction and research tasks for user
@@ -67,6 +68,21 @@ export const constructionRouter = createTRPCRouter({
               },
             });
           }
+
+          // Update quest progress for building completion
+          if (construction.targetLevel === 1) {
+            // First time building - trigger BUILD_BUILDING quest
+            await updateQuestProgress(ctx.prisma, ctx.userId, "BUILD_BUILDING", {
+              target: construction.buildingType,
+              amount: 1,
+            });
+          }
+
+          // Always trigger REACH_LEVEL quest for building upgrades
+          await updateQuestProgress(ctx.prisma, ctx.userId, "REACH_LEVEL", {
+            target: construction.buildingType,
+            level: construction.targetLevel,
+          });
         }
       }
     }

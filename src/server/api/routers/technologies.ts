@@ -8,6 +8,7 @@ import {
 } from "@/lib/technology-effects";
 import { TECHNOLOGY_DATA } from "@/lib/timer-service";
 import { SeasonManager } from "@/lib/season-manager";
+import { updateQuestProgress } from "@/lib/quest-progress-tracker";
 
 export const technologiesRouter = createTRPCRouter({
   // Get all researched technologies for current user in current season
@@ -296,6 +297,12 @@ export const technologiesRouter = createTRPCRouter({
 
       // Get technology data for response
       const techData = TECHNOLOGY_DATA[research.techKey];
+
+      // Update quest progress for research completion
+      await updateQuestProgress(ctx.prisma, ctx.userId, "RESEARCH_TECH", {
+        target: research.techKey,
+        amount: 1,
+      });
 
       return {
         technology: researchedTech,
