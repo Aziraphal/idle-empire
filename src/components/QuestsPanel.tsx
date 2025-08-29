@@ -266,28 +266,29 @@ export default function QuestsPanel({ isOpen, onClose }: QuestsPanelProps) {
                 <div className="bg-stone-700 rounded-lg p-3">
                   <h5 className="font-medium mb-2 text-sm">🎁 Rewards</h5>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">
-                    {quest.rewards?.resources && Object.entries(quest.rewards.resources).map(([type, amount]) => (
+                    {quest.rewards && typeof quest.rewards === 'object' && 'resources' in quest.rewards && quest.rewards.resources && 
+                     Object.entries(quest.rewards.resources as Record<string, number>).map(([type, amount]) => (
                       <div key={type} className="flex items-center gap-1">
-                        <span className="text-empire-gold">+{amount as number}</span>
+                        <span className="text-empire-gold">+{amount}</span>
                         <span className="text-stone-300">{type}</span>
                       </div>
                     ))}
-                    {quest.rewards?.xp && (
+                    {quest.rewards && typeof quest.rewards === 'object' && 'xp' in quest.rewards && quest.rewards.xp && (
                       <div className="flex items-center gap-1">
-                        <span className="text-blue-400">+{quest.rewards.xp}</span>
+                        <span className="text-blue-400">+{quest.rewards.xp as number}</span>
                         <span className="text-stone-300">XP</span>
                       </div>
                     )}
-                    {quest.rewards?.title && (
+                    {quest.rewards && typeof quest.rewards === 'object' && 'title' in quest.rewards && quest.rewards.title && (
                       <div className="flex items-center gap-1">
                         <span className="text-purple-400">🏷️</span>
-                        <span className="text-stone-300">{quest.rewards.title}</span>
+                        <span className="text-stone-300">{quest.rewards.title as string}</span>
                       </div>
                     )}
-                    {quest.rewards?.cosmetic && (
+                    {quest.rewards && typeof quest.rewards === 'object' && 'cosmetic' in quest.rewards && quest.rewards.cosmetic && (
                       <div className="flex items-center gap-1">
                         <span className="text-pink-400">🎨</span>
-                        <span className="text-stone-300">{quest.rewards.cosmetic}</span>
+                        <span className="text-stone-300">{quest.rewards.cosmetic as string}</span>
                       </div>
                     )}
                   </div>
