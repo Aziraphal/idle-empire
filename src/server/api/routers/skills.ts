@@ -10,6 +10,11 @@ export const skillsRouter = createTRPCRouter({
       where: { userId: ctx.userId },
       include: {
         researchedTechnologies: true,
+        provinces: {
+          include: {
+            buildings: true,
+          },
+        },
       },
     });
 
@@ -23,8 +28,11 @@ export const skillsRouter = createTRPCRouter({
       include: { skill: true },
     });
 
-    // Get user level (based on total building levels or some other metric)
-    const userLevel = Math.max(1, Math.floor(city.totalPower / 1000)); // Simplified level calculation
+    // Calculate user level based on total building levels
+    const totalBuildingLevels = city.provinces.reduce((total, province) => {
+      return total + province.buildings.reduce((sum, building) => sum + building.level, 0);
+    }, 0);
+    const userLevel = Math.max(1, Math.floor(totalBuildingLevels / 5) + 1); // Level = buildings / 5 + 1
 
     // Get unlocked technologies
     const unlockedTechs = city.researchedTechnologies.map(tech => tech.techKey);
@@ -107,15 +115,25 @@ export const skillsRouter = createTRPCRouter({
 
       const city = await ctx.prisma.city.findUnique({
         where: { userId: ctx.userId },
-        include: { researchedTechnologies: true }
+        include: { 
+          researchedTechnologies: true,
+          provinces: {
+            include: {
+              buildings: true,
+            },
+          },
+        }
       });
 
       if (!city) {
         throw new Error("City not found");
       }
 
-      // Check requirements
-      const userLevel = Math.max(1, Math.floor(city.totalPower / 1000));
+      // Check requirements - calculate level from buildings
+      const totalBuildingLevels = city.provinces.reduce((total, province) => {
+        return total + province.buildings.reduce((sum, building) => sum + building.level, 0);
+      }, 0);
+      const userLevel = Math.max(1, Math.floor(totalBuildingLevels / 5) + 1);
       const unlockedTechs = city.researchedTechnologies.map(tech => tech.techKey);
       const unlockedSkills = await ctx.prisma.playerSkill.findMany({
         where: { userId: ctx.userId, isUnlocked: true },
