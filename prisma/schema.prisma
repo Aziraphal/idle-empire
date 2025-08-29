@@ -917,41 +917,11 @@ model Quest {
   // Requirements & Objectives
   prerequisites String[]              // Keys of quests that must be completed first
   objectives    Json                  // Flexible objective structure
-  /*
-  Example objectives:
-  {
-    "type": "BUILD_BUILDING",
-    "target": "FARM", 
-    "amount": 1,
-    "currentAmount": 0
-  }
-  OR
-  {
-    "type": "COLLECT_RESOURCE",
-    "target": "GOLD",
-    "amount": 1000, 
-    "currentAmount": 0
-  }
-  OR
-  {
-    "type": "REACH_LEVEL",
-    "target": "FARM",
-    "level": 5,
-    "currentLevel": 0
-  }
-  */
+  // Example objectives: BUILD_BUILDING, COLLECT_RESOURCE, REACH_LEVEL, RESEARCH_TECH
   
   // Rewards
   rewards       Json                  // Flexible reward structure
-  /*
-  Example rewards:
-  {
-    "resources": {"gold": 500, "food": 200},
-    "xp": 100,
-    "title": "Farmer",
-    "cosmetic": "farm_skin_1"
-  }
-  */
+  // Example rewards: resources, xp, title, cosmetic
   
   // Timing (for daily/weekly quests)
   refreshType   String?               // "DAILY", "WEEKLY", null for permanent
@@ -984,14 +954,7 @@ model PlayerQuest {
   // Progress
   status      QuestStatus @default(LOCKED)
   progress    Json        @default("{}")  // Current progress towards objectives
-  /*
-  Example progress:
-  {
-    "currentAmount": 2,
-    "currentLevel": 3,
-    "checkpoints": ["first_farm_built", "first_upgrade"]
-  }
-  */
+  // Example progress: currentAmount, currentLevel, checkpoints
   
   // Timing
   startedAt   DateTime?               // When quest became available/started
