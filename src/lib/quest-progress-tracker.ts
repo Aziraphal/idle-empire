@@ -227,7 +227,7 @@ export async function processCompletedTasks(prisma: PrismaClient, userId: string
         cityId: research.cityId,
         techKey: research.techKey,
         researchedAt: new Date(),
-        seasonId: activeSeason?.id || null, // Use active season or null if no season
+        seasonId: activeSeason?.id, // Use active season or undefined if no season
       },
     });
 
