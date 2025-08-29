@@ -3,6 +3,7 @@ import { calculateIdleProduction } from "@/lib/idle-calculator";
 import { ResourceType } from "@prisma/client";
 import { runEventScheduler, isProvinceEligibleForEvent } from "@/lib/event-scheduler";
 import { SeasonManager } from "@/lib/season-manager";
+import { processCompletedTasks, trackResourceCollection } from "@/lib/quest-progress-tracker";
 
 export const empireRouter = createTRPCRouter({
   getMyEmpire: protectedProcedure.query(async ({ ctx }) => {
@@ -79,6 +80,16 @@ export const empireRouter = createTRPCRouter({
               stoneGained: production.totalGained.STONE,
               ironGained: production.totalGained.IRON,
             },
+          });
+
+          // STEP 3: Track resource collection for quests
+          await trackResourceCollection(ctx.prisma, ctx.userId, {
+            GOLD: production.totalGained.GOLD,
+            FOOD: production.totalGained.FOOD,
+            STONE: production.totalGained.STONE,
+            IRON: production.totalGained.IRON,
+            POP: production.totalGained.POP,
+            INFLUENCE: production.totalGained.INFLUENCE,
           });
 
           return {
@@ -187,7 +198,10 @@ export const empireRouter = createTRPCRouter({
     // This combines the existing idle production logic with event generation
     // Called every 30 seconds by the frontend
     
-    // First, process normal idle production (same as getProductionSummary)
+    // STEP 1: Process completed construction/research tasks and update quests
+    const completedTasks = await processCompletedTasks(ctx.prisma, ctx.userId);
+    
+    // STEP 2: Process normal idle production (same as getProductionSummary)
     const city = await ctx.prisma.city.findUnique({
       where: { userId: ctx.userId },
       include: {
@@ -297,6 +311,9 @@ export const empireRouter = createTRPCRouter({
       governorCount: city.provinces.filter((p) => p.governor).length,
       activeEventCount: city.provinces.reduce((sum, p) => sum + p.events.length, 0),
       eventGenerationTriggered,
+      // Quest-related progress tracking
+      completedConstructions: completedTasks.completedConstructions,
+      completedResearches: completedTasks.completedResearches,
     };
   }),
 });

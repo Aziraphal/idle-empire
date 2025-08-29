@@ -50,6 +50,7 @@ model User {
   playerBonuses   PlayerBonus[]
   achievements    PlayerAchievement[]
   playerCosmetics PlayerCosmetic[]
+  playerQuests    PlayerQuest[]
   
   @@index([email])
   @@index([username])
@@ -877,4 +878,133 @@ model PlayerCosmetic {
   @@index([userId])
   @@index([cosmeticId])
   @@index([isEquipped])
+}
+
+// ===== QUEST SYSTEM =====
+
+enum QuestType {
+  TUTORIAL      // Onboarding quests for new players
+  DAILY         // Reset every day
+  WEEKLY        // Reset every week
+  SEASONAL      // Available during specific seasons
+  ACHIEVEMENT   // One-time permanent achievements
+  STORY         // Sequential story quests
+}
+
+enum QuestStatus {
+  LOCKED        // Prerequisites not met
+  AVAILABLE     // Can be started/progressed
+  IN_PROGRESS   // Started but not completed
+  COMPLETED     // Finished, rewards claimable
+  CLAIMED       // Rewards already claimed
+}
+
+model Quest {
+  id            String      @id @default(cuid())
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  
+  // Quest Identity
+  key           String      @unique  // "tutorial_first_building", "daily_gold_1000"
+  name          String                // "Build Your First Farm"
+  description   String                // "Construct a farm to start food production"
+  
+  // Quest Configuration
+  type          QuestType
+  category      String                // "Building", "Research", "Resource", etc.
+  sortOrder     Int         @default(0)
+  
+  // Requirements & Objectives
+  prerequisites String[]              // Keys of quests that must be completed first
+  objectives    Json                  // Flexible objective structure
+  /*
+  Example objectives:
+  {
+    "type": "BUILD_BUILDING",
+    "target": "FARM", 
+    "amount": 1,
+    "currentAmount": 0
+  }
+  OR
+  {
+    "type": "COLLECT_RESOURCE",
+    "target": "GOLD",
+    "amount": 1000, 
+    "currentAmount": 0
+  }
+  OR
+  {
+    "type": "REACH_LEVEL",
+    "target": "FARM",
+    "level": 5,
+    "currentLevel": 0
+  }
+  */
+  
+  // Rewards
+  rewards       Json                  // Flexible reward structure
+  /*
+  Example rewards:
+  {
+    "resources": {"gold": 500, "food": 200},
+    "xp": 100,
+    "title": "Farmer",
+    "cosmetic": "farm_skin_1"
+  }
+  */
+  
+  // Timing (for daily/weekly quests)
+  refreshType   String?               // "DAILY", "WEEKLY", null for permanent
+  expiresAt     DateTime?             // When quest expires (dailies/weeklies)
+  
+  // Season Availability
+  seasonId      String?
+  season        Season?     @relation(fields: [seasonId], references: [id], onDelete: Cascade)
+  
+  // Relations
+  playerQuests  PlayerQuest[]
+  
+  @@index([type])
+  @@index([category])
+  @@index([seasonId])
+  @@index([sortOrder])
+}
+
+model PlayerQuest {
+  id          String      @id @default(cuid())
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  
+  // Relations
+  userId      String
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  questId     String
+  quest       Quest       @relation(fields: [questId], references: [id], onDelete: Cascade)
+  
+  // Progress
+  status      QuestStatus @default(LOCKED)
+  progress    Json        @default("{}")  // Current progress towards objectives
+  /*
+  Example progress:
+  {
+    "currentAmount": 2,
+    "currentLevel": 3,
+    "checkpoints": ["first_farm_built", "first_upgrade"]
+  }
+  */
+  
+  // Timing
+  startedAt   DateTime?               // When quest became available/started
+  completedAt DateTime?               // When objectives were completed
+  claimedAt   DateTime?               // When rewards were claimed
+  expiresAt   DateTime?               // Inherited from quest or calculated
+  
+  // Tracking
+  lastUpdated DateTime    @default(now()) // When progress was last updated
+  
+  @@unique([userId, questId])
+  @@index([userId])
+  @@index([questId])
+  @@index([status])
+  @@index([expiresAt])
 }
