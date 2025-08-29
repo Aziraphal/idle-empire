@@ -1,8 +1,8 @@
-# Use the official Node.js 18 image
+# Use Node.js 18 with a more compatible base for Prisma
 FROM node:18-alpine
 
-# Install OpenSSL compatibility library for Prisma
-RUN apk add --no-cache openssl1.1-compat
+# Install OpenSSL and other dependencies needed by Prisma
+RUN apk add --no-cache openssl libc6-compat
 
 # Set working directory
 WORKDIR /app
