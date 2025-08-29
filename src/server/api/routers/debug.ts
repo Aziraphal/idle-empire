@@ -99,4 +99,49 @@ export const debugRouter = createTRPCRouter({
       throw new Error(`Season init failed: ${error instanceof Error ? error.message : "Unknown error"}`);
     }
   }),
+
+  // Check user quests and initialize tutorial if needed
+  checkQuests: publicProcedure.query(async ({ ctx }) => {
+    try {
+      // Get a test user (first user in DB)
+      const user = await ctx.prisma.user.findFirst();
+      
+      if (!user) {
+        return {
+          status: "no_users",
+          message: "No users found in database"
+        };
+      }
+
+      // Get user's quests
+      const playerQuests = await ctx.prisma.playerQuest.findMany({
+        where: { userId: user.id },
+        include: { quest: true },
+        orderBy: { createdAt: 'asc' }
+      });
+
+      // Get all available quests
+      const allQuests = await ctx.prisma.quest.findMany({
+        orderBy: { key: 'asc' }
+      });
+
+      return {
+        status: "ok",
+        userId: user.id,
+        username: user.username,
+        playerQuests: playerQuests.length,
+        allQuests: allQuests.length,
+        quests: playerQuests.map(pq => ({
+          key: pq.quest.key,
+          status: pq.status,
+          progress: pq.progress,
+          objectives: pq.quest.objectives
+        })),
+        timestamp: new Date().toISOString()
+      };
+    } catch (error) {
+      console.error("Debug quests error:", error);
+      throw new Error(`Quest check failed: ${error instanceof Error ? error.message : "Unknown error"}`);
+    }
+  }),
 });
