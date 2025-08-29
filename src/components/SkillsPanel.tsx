@@ -71,7 +71,7 @@ export default function SkillsPanel({ isOpen, onClose }: SkillsPanelProps) {
     useSkillMutation.mutate({ skillKey });
   };
 
-  const formatCooldown = (cooldownExpiresAt: Date | null) => {
+  const formatCooldown = (cooldownExpiresAt: Date | null | undefined) => {
     if (!cooldownExpiresAt) return null;
     
     const now = new Date();
