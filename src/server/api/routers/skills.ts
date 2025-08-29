@@ -304,6 +304,52 @@ export const skillsRouter = createTRPCRouter({
         }
       }
 
+      // Deduct mana cost if needed
+      if (scaledSkill.manaCost > 0) {
+        const firstProvince = await ctx.prisma.province.findFirst({
+          where: { city: { userId: ctx.userId } }
+        });
+
+        if (firstProvince) {
+          await ctx.prisma.resourceStock.upsert({
+            where: {
+              provinceId_type: {
+                provinceId: firstProvince.id,
+                type: "MANA"
+              }
+            },
+            create: {
+              provinceId: firstProvince.id,
+              type: "MANA",
+              amount: Math.max(0, 0 - scaledSkill.manaCost) // Mana starts at 0
+            },
+            update: {
+              amount: { decrement: scaledSkill.manaCost }
+            }
+          });
+        }
+      }
+
+      // Deduct other resource costs
+      for (const [resource, cost] of Object.entries(scaledSkill.resourceCosts)) {
+        const firstProvince = await ctx.prisma.province.findFirst({
+          where: { city: { userId: ctx.userId } }
+        });
+
+        if (firstProvince && cost > 0) {
+          const resourceType = resource.toUpperCase() as any;
+          await ctx.prisma.resourceStock.updateMany({
+            where: {
+              province: { city: { userId: ctx.userId } },
+              type: resourceType
+            },
+            data: {
+              amount: { decrement: cost }
+            }
+          });
+        }
+      }
+
       // Apply skill effects (simplified implementation)
       const effectsApplied = await applySkillEffects(ctx, scaledSkill, input.targetType, input.targetId);
 
