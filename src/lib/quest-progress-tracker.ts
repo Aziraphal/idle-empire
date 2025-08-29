@@ -161,22 +161,27 @@ export async function processCompletedTasks(prisma: PrismaClient, userId: string
     });
 
     // Update or create building
-    await prisma.buildingInstance.upsert({
+    const existingBuilding = await prisma.buildingInstance.findFirst({
       where: {
-        provinceId_type: {
-          provinceId: construction.provinceId,
-          type: construction.buildingType,
-        },
-      },
-      update: {
-        level: construction.targetLevel,
-      },
-      create: {
         provinceId: construction.provinceId,
         type: construction.buildingType,
-        level: construction.targetLevel,
       },
     });
+
+    if (existingBuilding) {
+      await prisma.buildingInstance.update({
+        where: { id: existingBuilding.id },
+        data: { level: construction.targetLevel },
+      });
+    } else {
+      await prisma.buildingInstance.create({
+        data: {
+          provinceId: construction.provinceId,
+          type: construction.buildingType,
+          level: construction.targetLevel,
+        },
+      });
+    }
 
     // Update quest progress for building completion
     if (construction.targetLevel === 1) {

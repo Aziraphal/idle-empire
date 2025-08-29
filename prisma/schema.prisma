@@ -131,6 +131,7 @@ model BuildingInstance {
   type        String    // ex: FARM, MINE, QUARRY, BARRACKS
   level       Int       @default(1)
   
+  @@unique([provinceId, type])
   @@index([provinceId])
 }
 
