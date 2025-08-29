@@ -15,6 +15,8 @@ const RESOURCE_ICONS = {
   IRON: "⚔️", 
   POP: "👥",
   INFLUENCE: "⭐",
+  MANA: "✨",
+  ENERGY: "⚡",
 };
 
 const PERSONALITY_ICONS: Record<GovernorPersonality, string> = {

@@ -16,6 +16,8 @@ const RESOURCE_ICONS = {
   iron: "⚔️",
   population: "👥",
   influence: "⭐",
+  mana: "✨",
+  energy: "⚡",
 };
 
 const BUILDING_ICONS = {

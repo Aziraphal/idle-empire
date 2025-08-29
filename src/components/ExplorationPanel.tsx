@@ -39,6 +39,8 @@ const RESOURCE_ICONS = {
   iron: "⚔️",
   population: "👥",
   influence: "⭐",
+  mana: "✨",
+  energy: "⚡",
 };
 
 interface Territory {

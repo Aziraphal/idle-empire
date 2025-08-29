@@ -28,6 +28,8 @@ const RESOURCE_ICONS = {
   stone: "🪨", 
   iron: "⚔️",
   influence: "⭐",
+  mana: "✨",
+  energy: "⚡",
 } as const;
 
 export default function TechnologiesPanel({ isOpen, onClose }: TechnologiesPanelProps) {
