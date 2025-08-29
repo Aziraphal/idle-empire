@@ -52,7 +52,7 @@ export default function BuildPanel({ isOpen, onClose }: BuildPanelProps) {
     },
   });
 
-  const startResearchMutation = trpc.construction.startResearch.useMutation({
+  const startResearchMutation = trpc.technologies.startResearch.useMutation({
     onSuccess: () => {
       refetchProduction();
       refetchTasks();
