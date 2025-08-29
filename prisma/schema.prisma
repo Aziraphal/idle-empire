@@ -17,6 +17,8 @@ enum ResourceType {
   IRON
   POP
   INFLUENCE
+  MANA       // Magical energy
+  ENERGY     // Active skill energy
 }
 
 enum GovernorPersonality {
@@ -51,6 +53,10 @@ model User {
   achievements    PlayerAchievement[]
   playerCosmetics PlayerCosmetic[]
   playerQuests    PlayerQuest[]
+  
+  // Skills system
+  playerSkills    PlayerSkill[]
+  skillUsages     SkillUsage[]
   
   @@index([email])
   @@index([username])
@@ -203,6 +209,7 @@ model Season {
   researchedTechs ResearchedTechnology[]
   seasonRankings  SeasonRanking[]
   quests          Quest[]
+  skills          Skill[]
   
   @@index([status])
   @@index([startDate, endDate])
@@ -972,4 +979,110 @@ model PlayerQuest {
   @@index([questId])
   @@index([status])
   @@index([expiresAt])
+}
+
+// Active Skills System
+model Skill {
+  id               String         @id @default(cuid())
+  key              String         @unique
+  name             String
+  description      String
+  category         SkillCategory
+  type             SkillType
+  
+  // Requirements
+  requiredLevel    Int            @default(1)
+  requiredTechs    String[]       // Array of required tech keys
+  prerequisites    String[]       // Array of required skill keys
+  
+  // Mechanics
+  cooldownSeconds  Int            // Cooldown in seconds
+  energyCost       Int            @default(0)
+  manaCost         Int            @default(0)
+  resourceCosts    Json           // Dynamic resource costs
+  
+  // Effects
+  effects          Json           // Skill effects and parameters
+  duration         Int            @default(0) // Duration in seconds, 0 = instant
+  
+  // Availability
+  maxLevel         Int            @default(1)
+  seasonId         String?        // Available in specific seasons
+  season           Season?        @relation(fields: [seasonId], references: [id])
+  isActive         Boolean        @default(true)
+  
+  // Relations
+  playerSkills     PlayerSkill[]
+  skillUsages      SkillUsage[]
+  
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+  
+  @@map("skills")
+}
+
+model PlayerSkill {
+  id               String         @id @default(cuid())
+  userId           String
+  user             User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  skillId          String
+  skill            Skill          @relation(fields: [skillId], references: [id], onDelete: Cascade)
+  
+  // Progress
+  level            Int            @default(1)
+  experience       Int            @default(0)
+  isUnlocked       Boolean        @default(false)
+  unlockedAt       DateTime?
+  
+  // Usage tracking
+  timesUsed        Int            @default(0)
+  lastUsedAt       DateTime?
+  
+  // Cooldowns
+  isOnCooldown     Boolean        @default(false)
+  cooldownExpiresAt DateTime?
+  
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+  
+  @@unique([userId, skillId])
+  @@map("player_skills")
+}
+
+model SkillUsage {
+  id               String         @id @default(cuid())
+  userId           String
+  user             User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  skillId          String
+  skill            Skill          @relation(fields: [skillId], references: [id], onDelete: Cascade)
+  
+  // Usage context
+  targetType       String?        // "province", "building", "enemy", etc.
+  targetId         String?        // ID of target
+  context          Json           // Additional context data
+  
+  // Results
+  success          Boolean        @default(true)
+  effects          Json           // What effects were applied
+  resourcesUsed    Json           // Resources consumed
+  
+  usedAt           DateTime       @default(now())
+  
+  @@map("skill_usages")
+}
+
+// Skill enums
+enum SkillCategory {
+  ECONOMY
+  MILITARY
+  MAGIC
+  UTILITY
+  ULTIMATE
+}
+
+enum SkillType {
+  INSTANT      // Immediate effect
+  TOGGLE       // Can be turned on/off
+  CHANNELED    // Requires continuous energy
+  PASSIVE      // Always active (upgrades)
 }

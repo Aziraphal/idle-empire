@@ -15,6 +15,7 @@ import RankingsPanel from "./RankingsPanel";
 import AlliancesPanel from "./AlliancesPanel";
 import RewardsPanel from "./RewardsPanel";
 import QuestsPanel from "./QuestsPanel";
+import SkillsPanel from "./SkillsPanel";
 
 interface EmpireDashboardProps {
   onLogout: () => void;
@@ -53,6 +54,7 @@ export default function EmpireDashboard({ onLogout }: EmpireDashboardProps) {
   const [showAlliancesPanel, setShowAlliancesPanel] = useState(false);
   const [showRewardsPanel, setShowRewardsPanel] = useState(false);
   const [showQuestsPanel, setShowQuestsPanel] = useState(false);
+  const [showSkillsPanel, setShowSkillsPanel] = useState(false);
   
   // First call getMyEmpire to trigger production updates
   const { refetch: refetchEmpire } = trpc.empire.getMyEmpire.useQuery(
@@ -225,6 +227,12 @@ export default function EmpireDashboard({ onLogout }: EmpireDashboardProps) {
             className="btn-primary text-sm"
           >
             📋 Quests
+          </button>
+          <button
+            onClick={() => setShowSkillsPanel(true)}
+            className="btn-primary text-sm"
+          >
+            ⚡ Skills
           </button>
           <button
             onClick={() => setShowSavePanel(true)}
@@ -549,6 +557,12 @@ export default function EmpireDashboard({ onLogout }: EmpireDashboardProps) {
       <QuestsPanel 
         isOpen={showQuestsPanel} 
         onClose={() => setShowQuestsPanel(false)} 
+      />
+
+      {/* Skills Panel Modal */}
+      <SkillsPanel 
+        isOpen={showSkillsPanel} 
+        onClose={() => setShowSkillsPanel(false)} 
       />
     </div>
   );

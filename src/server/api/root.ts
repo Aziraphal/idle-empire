@@ -12,6 +12,7 @@ import { alliancesRouter } from "./routers/alliances";
 import { rewardsRouter } from "./routers/rewards";
 import { questsRouter } from "./routers/quests";
 import { debugRouter } from "./routers/debug";
+import { skillsRouter } from "./routers/skills";
 
 export const appRouter = createTRPCRouter({
   auth: authRouter,
@@ -27,6 +28,7 @@ export const appRouter = createTRPCRouter({
   rewards: rewardsRouter,
   quests: questsRouter,
   debug: debugRouter,
+  skills: skillsRouter,
 });
 
 export type AppRouter = typeof appRouter;
