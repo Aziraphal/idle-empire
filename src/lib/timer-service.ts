@@ -265,18 +265,38 @@ export function getBuildingUpgradeCost(buildingType: string, currentLevel: numbe
     costMultiplier = Math.pow(1.3, 5) * Math.pow(1.4, 5) * Math.pow(1.6, 5) * Math.pow(2.0, 5) * Math.pow(2.5, currentLevel - 20);
   }
   
-  // Time scaling (rapid start, then steep progression)
+  // Time scaling with fixed times for early levels, then progressive scaling
   let timeMultiplier = 1;
   if (currentLevel <= 5) {
-    timeMultiplier = Math.pow(1.05, currentLevel); // Ultra-gentle start for engagement
+    // Fixed times for ultra-fast early game engagement
+    const fixedTimes = [0, 5/60, 10/60, 15/60, 20/60, 25/60]; // in hours: 0, 5min, 10min, 15min, 20min, 25min
+    timeMultiplier = fixedTimes[currentLevel] / baseData.buildTime;
   } else if (currentLevel <= 10) {
-    timeMultiplier = Math.pow(1.05, 5) * Math.pow(1.1, currentLevel - 5);
+    // Continue from level 5 time (25min) with gentle scaling
+    const level5Time = 25/60; // 25 minutes in hours
+    const baseLevel6Multiplier = level5Time / baseData.buildTime;
+    timeMultiplier = baseLevel6Multiplier * Math.pow(1.2, currentLevel - 5);
   } else if (currentLevel <= 15) {
-    timeMultiplier = Math.pow(1.05, 5) * Math.pow(1.1, 5) * Math.pow(1.5, currentLevel - 10); // Much steeper at 11-15
+    // Steep progression starting at level 11
+    const level5Time = 25/60;
+    const baseLevel6Multiplier = level5Time / baseData.buildTime;
+    const level10Multiplier = baseLevel6Multiplier * Math.pow(1.2, 5);
+    timeMultiplier = level10Multiplier * Math.pow(1.5, currentLevel - 10);
   } else if (currentLevel <= 20) {
-    timeMultiplier = Math.pow(1.05, 5) * Math.pow(1.1, 5) * Math.pow(1.5, 5) * Math.pow(2.0, currentLevel - 15); // Very steep
+    // Very steep progression
+    const level5Time = 25/60;
+    const baseLevel6Multiplier = level5Time / baseData.buildTime;
+    const level10Multiplier = baseLevel6Multiplier * Math.pow(1.2, 5);
+    const level15Multiplier = level10Multiplier * Math.pow(1.5, 5);
+    timeMultiplier = level15Multiplier * Math.pow(2.0, currentLevel - 15);
   } else {
-    timeMultiplier = Math.pow(1.05, 5) * Math.pow(1.1, 5) * Math.pow(1.5, 5) * Math.pow(2.0, 5) * Math.pow(3.0, currentLevel - 20); // Extreme
+    // Extreme progression for high levels
+    const level5Time = 25/60;
+    const baseLevel6Multiplier = level5Time / baseData.buildTime;
+    const level10Multiplier = baseLevel6Multiplier * Math.pow(1.2, 5);
+    const level15Multiplier = level10Multiplier * Math.pow(1.5, 5);
+    const level20Multiplier = level15Multiplier * Math.pow(2.0, 5);
+    timeMultiplier = level20Multiplier * Math.pow(3.0, currentLevel - 20);
   }
   
   const levelMultiplier = costMultiplier;
