@@ -2,13 +2,14 @@ import { BuildingInstance, ResourceType, GovernorPersonality } from "@prisma/cli
 import { calculateTechnologyBonuses, applyTechnologyBonuses, TechnologyBonus } from "./technology-effects";
 
 // BASE PRODUCTION - Every player gets these rates automatically (per hour)
+// HIGH RATES FOR PLAYER ENGAGEMENT - First buildings should be affordable quickly
 const BASE_PRODUCTION: Record<ResourceType, number> = {
-  GOLD: 20,        // Base gold income
-  FOOD: 25,        // Base food production  
-  STONE: 10,       // Base stone gathering
-  IRON: 5,         // Base iron mining
-  POP: 2,          // Base population growth
-  INFLUENCE: 5,    // Base influence
+  GOLD: 300,       // Base gold income (first building in ~3-4 minutes!)
+  FOOD: 400,       // Base food production (abundant food)  
+  STONE: 200,      // Base stone gathering (construction ready)
+  IRON: 100,       // Base iron mining (equipment available)
+  POP: 20,         // Base population growth (fast empire growth)
+  INFLUENCE: 50,   // Base influence (diplomacy active)
 };
 
 // Production rates per hour by building type and level
