@@ -10,6 +10,8 @@ const BASE_PRODUCTION: Record<ResourceType, number> = {
   IRON: 100,       // Base iron mining (equipment available)
   POP: 20,         // Base population growth (fast empire growth)
   INFLUENCE: 50,   // Base influence (diplomacy active)
+  MANA: 10,        // Base mana regeneration (magical energy)
+  ENERGY: 20,      // Base energy regeneration (active skills)
 };
 
 // Production rates per hour by building type and level
@@ -21,6 +23,8 @@ const BUILDING_PRODUCTION: Record<string, Record<ResourceType, number>> = {
     IRON: 0,
     POP: 5,   // farms increase population capacity
     INFLUENCE: 0,
+    MANA: 0,
+    ENERGY: 0,
   },
   MINE: {
     GOLD: 30,
@@ -29,6 +33,8 @@ const BUILDING_PRODUCTION: Record<string, Record<ResourceType, number>> = {
     IRON: 25,
     POP: 0,
     INFLUENCE: 0,
+    MANA: 0,
+    ENERGY: 0,
   },
   QUARRY: {
     GOLD: 10,
@@ -37,6 +43,8 @@ const BUILDING_PRODUCTION: Record<string, Record<ResourceType, number>> = {
     IRON: 0,
     POP: 0,
     INFLUENCE: 0,
+    MANA: 0,
+    ENERGY: 0,
   },
   BARRACKS: {
     GOLD: 0,
@@ -45,6 +53,8 @@ const BUILDING_PRODUCTION: Record<string, Record<ResourceType, number>> = {
     IRON: 0,
     POP: 0,
     INFLUENCE: 15, // military increases influence
+    MANA: 0,
+    ENERGY: 5, // barracks generate some energy
   },
   MARKETPLACE: {
     GOLD: 80,
@@ -53,6 +63,18 @@ const BUILDING_PRODUCTION: Record<string, Record<ResourceType, number>> = {
     IRON: 0,
     POP: 0,
     INFLUENCE: 10,
+    MANA: 0,
+    ENERGY: 0,
+  },
+  ACADEMY: {
+    GOLD: 0,
+    FOOD: -5, // academy consumes food (researchers)
+    STONE: 0,
+    IRON: 0,
+    POP: 0,
+    INFLUENCE: 5,
+    MANA: 15, // academy generates mana
+    ENERGY: 10, // academy generates energy
   },
 };
 
@@ -65,6 +87,8 @@ const GOVERNOR_MODIFIERS: Record<GovernorPersonality, Record<ResourceType, numbe
     IRON: 0.9,   // -10% iron (less military)
     POP: 1.1,    // +10% population growth
     INFLUENCE: 0.95,
+    MANA: 1.0,
+    ENERGY: 1.05, // +5% energy (organized)
   },
   AGGRESSIVE: {
     GOLD: 0.9,   // -10% gold (more spending on military)
@@ -73,6 +97,8 @@ const GOVERNOR_MODIFIERS: Record<GovernorPersonality, Record<ResourceType, numbe
     IRON: 1.3,   // +30% iron (military focus)
     POP: 0.9,    // -10% pop (wars)
     INFLUENCE: 1.2, // +20% influence (conquest)
+    MANA: 0.9,   // -10% mana (less focus on magic)
+    ENERGY: 1.2,  // +20% energy (battle ready)
   },
   MERCHANT: {
     GOLD: 1.4,   // +40% gold (trade expertise)
@@ -81,6 +107,8 @@ const GOVERNOR_MODIFIERS: Record<GovernorPersonality, Record<ResourceType, numbe
     IRON: 1.0,
     POP: 1.05,   // +5% population (commerce attracts people)
     INFLUENCE: 1.1, // +10% influence (trade networks)
+    MANA: 1.0,
+    ENERGY: 1.0,
   },
   EXPLORER: {
     GOLD: 1.15,  // +15% gold (discoveries)
@@ -89,6 +117,8 @@ const GOVERNOR_MODIFIERS: Record<GovernorPersonality, Record<ResourceType, numbe
     IRON: 1.15,  // +15% iron (mining discoveries)
     POP: 0.95,   // -5% pop (people leave to explore)
     INFLUENCE: 1.3, // +30% influence (territorial expansion)
+    MANA: 1.3,   // +30% mana (mystical discoveries)
+    ENERGY: 1.1,  // +10% energy (adventurous spirit)
   },
 };
 
