@@ -161,11 +161,11 @@ model ResearchedTechnology {
   cityId        String
   city          City     @relation(fields: [cityId], references: [id], onDelete: Cascade)
   techKey       String   // Technology identifier (AGRICULTURE_1, MINING_1, etc.)
-  seasonId      String   // Which season this was researched in
-  season        Season   @relation(fields: [seasonId], references: [id], onDelete: Cascade)
+  seasonId      String?  // Which season this was researched in (optional)
+  season        Season?  @relation(fields: [seasonId], references: [id], onDelete: Cascade)
   researchedAt  DateTime @default(now())
   
-  @@unique([cityId, techKey, seasonId])
+  @@unique([cityId, techKey])
   @@index([cityId])
   @@index([seasonId])
 }
