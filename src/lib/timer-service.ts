@@ -265,18 +265,18 @@ export function getBuildingUpgradeCost(buildingType: string, currentLevel: numbe
     costMultiplier = Math.pow(1.3, 5) * Math.pow(1.4, 5) * Math.pow(1.6, 5) * Math.pow(2.0, 5) * Math.pow(2.5, currentLevel - 20);
   }
   
-  // Time scaling (much gentler, especially early game)
+  // Time scaling (rapid start, then steep progression)
   let timeMultiplier = 1;
   if (currentLevel <= 5) {
-    timeMultiplier = Math.pow(1.1, currentLevel); // Very gentle start
+    timeMultiplier = Math.pow(1.05, currentLevel); // Ultra-gentle start for engagement
   } else if (currentLevel <= 10) {
-    timeMultiplier = Math.pow(1.1, 5) * Math.pow(1.15, currentLevel - 5);
+    timeMultiplier = Math.pow(1.05, 5) * Math.pow(1.1, currentLevel - 5);
   } else if (currentLevel <= 15) {
-    timeMultiplier = Math.pow(1.1, 5) * Math.pow(1.15, 5) * Math.pow(1.2, currentLevel - 10);
+    timeMultiplier = Math.pow(1.05, 5) * Math.pow(1.1, 5) * Math.pow(1.5, currentLevel - 10); // Much steeper at 11-15
   } else if (currentLevel <= 20) {
-    timeMultiplier = Math.pow(1.1, 5) * Math.pow(1.15, 5) * Math.pow(1.2, 5) * Math.pow(1.4, currentLevel - 15);
+    timeMultiplier = Math.pow(1.05, 5) * Math.pow(1.1, 5) * Math.pow(1.5, 5) * Math.pow(2.0, currentLevel - 15); // Very steep
   } else {
-    timeMultiplier = Math.pow(1.1, 5) * Math.pow(1.15, 5) * Math.pow(1.2, 5) * Math.pow(1.4, 5) * Math.pow(1.8, currentLevel - 20);
+    timeMultiplier = Math.pow(1.05, 5) * Math.pow(1.1, 5) * Math.pow(1.5, 5) * Math.pow(2.0, 5) * Math.pow(3.0, currentLevel - 20); // Extreme
   }
   
   const levelMultiplier = costMultiplier;
