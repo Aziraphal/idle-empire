@@ -1,6 +1,16 @@
 import { BuildingInstance, ResourceType, GovernorPersonality } from "@prisma/client";
 import { calculateTechnologyBonuses, applyTechnologyBonuses, TechnologyBonus } from "./technology-effects";
 
+// BASE PRODUCTION - Every player gets these rates automatically (per hour)
+const BASE_PRODUCTION: Record<ResourceType, number> = {
+  GOLD: 20,        // Base gold income
+  FOOD: 25,        // Base food production  
+  STONE: 10,       // Base stone gathering
+  IRON: 5,         // Base iron mining
+  POP: 2,          // Base population growth
+  INFLUENCE: 5,    // Base influence
+};
+
 // Production rates per hour by building type and level
 const BUILDING_PRODUCTION: Record<string, Record<ResourceType, number>> = {
   FARM: {
@@ -98,14 +108,14 @@ export function calculateIdleProduction(
   const timeDeltaMs = currentTime.getTime() - lastProductionTime.getTime();
   const timeDeltaHours = Math.max(0, timeDeltaMs / (1000 * 60 * 60));
 
-  // Initialize production rates
+  // Initialize production rates with BASE PRODUCTION
   const hourlyRate: Record<ResourceType, number> = {
-    GOLD: 0,
-    FOOD: 0,
-    STONE: 0,
-    IRON: 0,
-    POP: 0,
-    INFLUENCE: 0,
+    GOLD: BASE_PRODUCTION.GOLD,
+    FOOD: BASE_PRODUCTION.FOOD,
+    STONE: BASE_PRODUCTION.STONE,
+    IRON: BASE_PRODUCTION.IRON,
+    POP: BASE_PRODUCTION.POP,
+    INFLUENCE: BASE_PRODUCTION.INFLUENCE,
   };
 
   // Calculate technology bonuses first
