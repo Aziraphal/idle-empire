@@ -13,7 +13,7 @@ import CombatPanel from "./CombatPanel";
 import TechnologiesPanel from "./TechnologiesPanel";
 import RankingsPanel from "./RankingsPanel";
 import AlliancesPanel from "./AlliancesPanel";
-// import RewardsPanel from "./RewardsPanel"; // Temporairement désactivé
+import RewardsPanel from "./RewardsPanel";
 
 interface EmpireDashboardProps {
   onLogout: () => void;
@@ -212,14 +212,12 @@ export default function EmpireDashboard({ onLogout }: EmpireDashboardProps) {
               </span>
             )}
           </button>
-          {/* Temporairement désactivé 
           <button
             onClick={() => setShowRewardsPanel(true)}
             className="btn-primary text-sm"
           >
             🏆 Récompenses
           </button>
-          */}
           <button
             onClick={() => setShowSavePanel(true)}
             className="btn-primary text-sm"
@@ -521,7 +519,7 @@ export default function EmpireDashboard({ onLogout }: EmpireDashboardProps) {
         onClose={() => setShowAlliancesPanel(false)} 
       />
       
-      {/* Rewards Panel Modal - Temporairement désactivé
+      {/* Rewards Panel Modal */}
       {showRewardsPanel && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg max-w-6xl w-full max-h-screen overflow-auto m-4">
@@ -538,7 +536,6 @@ export default function EmpireDashboard({ onLogout }: EmpireDashboardProps) {
           </div>
         </div>
       )}
-      */}
     </div>
   );
 }
