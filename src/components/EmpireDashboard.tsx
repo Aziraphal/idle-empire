@@ -28,6 +28,8 @@ const RESOURCE_COLORS = {
   IRON: "text-resource-iron",
   POP: "text-resource-population",
   INFLUENCE: "text-resource-influence",
+  MANA: "text-purple-400",
+  ENERGY: "text-yellow-400",
 };
 
 const RESOURCE_ICONS = {
@@ -37,6 +39,8 @@ const RESOURCE_ICONS = {
   IRON: "⚔️",
   POP: "👥",
   INFLUENCE: "⭐",
+  MANA: "✨",
+  ENERGY: "⚡",
 };
 
 export default function EmpireDashboard({ onLogout }: EmpireDashboardProps) {
