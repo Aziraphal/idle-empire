@@ -245,8 +245,14 @@ export function getBuildingUpgradeCost(buildingType: string, currentLevel: numbe
   if (!baseData) throw new Error(`Unknown building type: ${buildingType}`);
 
   // Cost and time scale exponentially with level
-  const levelMultiplier = Math.pow(1.5, currentLevel);
-  const timeMultiplier = Math.pow(1.2, currentLevel);
+  // After level 15, scaling becomes much steeper (soft cap)
+  const baseLevelMultiplier = Math.pow(1.5, Math.min(currentLevel, 15));
+  const highLevelMultiplier = currentLevel > 15 ? Math.pow(2.0, currentLevel - 15) : 1;
+  const levelMultiplier = baseLevelMultiplier * highLevelMultiplier;
+  
+  const baseTimeMultiplier = Math.pow(1.2, Math.min(currentLevel, 15));
+  const highTimeMultiplier = currentLevel > 15 ? Math.pow(1.8, currentLevel - 15) : 1;
+  const timeMultiplier = baseTimeMultiplier * highTimeMultiplier;
 
   const upgradeCost: Record<string, number> = {};
   Object.entries(baseData.cost).forEach(([resource, amount]) => {
